@@ -23,6 +23,9 @@ type delim struct {
 	bufspos int
 	// Buffer end pos
 	bufepos int
+	// First index whose value doesn't match
+	// the value of the index before it
+	runstop int
 }
 
 type reader struct {
@@ -47,9 +50,18 @@ func NewReader(r io.Reader) io.Reader {
 // NOTE: append MUST NOT BE longer than end; this will cause undefined behavior
 // and possibly a nil-pointer dereference.
 func NewCustomReader(r io.Reader, start, end, append string) io.Reader {
+	slen := len(start)
+	elen := len(end)
+	alen := len(append)
+	srunstop := 1
+	erunstop := 1
+	for ; srunstop < slen && start[srunstop] == start[srunstop-1]; srunstop++ {
+	}
+	for ; erunstop < elen && end[erunstop] == end[erunstop-1]; erunstop++ {
+	}
 	return &reader{r, fstate(text),
-		delim{[]byte(start), make([]byte, len(start)+len(append)), len(start), (len(start) + len(append)), 0, 0, 0},
-		delim{[]byte(end), nil, len(end), 0, 0, 0, 0},
+		delim{[]byte(start), make([]byte, slen+alen), slen, (slen + alen), 0, 0, 0, srunstop},
+		delim{[]byte(end), nil, elen, 0, 0, 0, 0, erunstop},
 		append}
 }
 
@@ -95,14 +107,9 @@ func text(dst, src []byte, r *reader) (written, read int, next state) {
 				delim.delpos = 0
 				return wc, rc + 1, fstate(comment)
 			}
-		} else if src[rc] == delim.del[0] {
-			// This means that delim.delpos != 0,
-			// so add stuff to buffer
-			for i := 0; i < delim.delpos; i++ {
-				delim.buf[(delim.bufepos+i)%delim.buflen] = delim.del[i]
-			}
-			delim.bufepos = (delim.bufepos + delim.delpos) % delim.buflen
-			delim.delpos = 1
+		} else if delim.delpos != 0 && src[rc] == delim.del[delim.delpos-1] && delim.delpos == delim.runstop {
+			dst[wc] = delim.del[0]
+			wc++
 		} else {
 			if delim.delpos != 0 {
 				for i := 0; i < delim.delpos; i++ {
@@ -170,10 +177,7 @@ func comment(dst, src []byte, r *reader) (written, read int, next state) {
 				}
 				return wc, rc + 1, fstate(text)
 			}
-		} else if src[rc] == edelim.del[0] {
-			// This means that edelim.delpos != 0
-			edelim.delpos = 1
-		} else {
+		} else if edelim.delpos == 0 || src[rc] != edelim.del[edelim.delpos-1] || edelim.delpos != edelim.runstop {
 			if edelim.delpos != 0 {
 				edelim.delpos = 0
 			}
