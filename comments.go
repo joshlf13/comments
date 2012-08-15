@@ -89,11 +89,20 @@ func text(dst, src []byte, r *reader) (written, read int, next state) {
 		}
 
 		if src[rc] == delim.del[delim.delpos] {
+			
 			delim.delpos++
 			if delim.delpos == delim.dellen {
 				delim.delpos = 0
 				return wc, rc + 1, fstate(comment)
 			}
+		} else if src[rc] == delim.del[0] {
+			// This means that delim.delpos != 0,
+			// so add stuff to buffer
+			for i := 0; i < delim.delpos; i++ {
+				delim.buf[(delim.bufepos + i) % delim.buflen] = delim.del[i]
+			}
+			delim.bufepos = (delim.bufepos + delim.delpos) % delim.buflen
+			delim.delpos = 1
 		} else {
 			if delim.delpos != 0 {
 				for i := 0; i < delim.delpos; i++ {
@@ -101,6 +110,7 @@ func text(dst, src []byte, r *reader) (written, read int, next state) {
 				}
 				delim.bufepos = (delim.bufepos + delim.delpos) % delim.buflen
 				delim.delpos = 0
+				
 			}
 			// Either write another character
 			// from the buffer and write one
@@ -160,6 +170,9 @@ func comment(dst, src []byte, r *reader) (written, read int, next state) {
 				}
 				return wc, rc + 1, fstate(text)
 			}
+		} else if src[rc] == edelim.del[0] {
+			// This means that edelim.delpos != 0
+			edelim.delpos = 1
 		} else {
 			if edelim.delpos != 0 {
 				edelim.delpos = 0

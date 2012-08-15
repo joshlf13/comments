@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/joshlf13/comments"
+	// "github.com/joshlf13/comments"
 	"io"
 	"os"
 )
@@ -26,9 +26,9 @@ func main() {
 		}
 	}
 
-	delim := bash
+	delim := c2
 
 	// Try messing around with start and end delimiters
-	rdr := comments.NewCustomReader(source, delim[0], delim[1], delim[2])
+	rdr := NewCustomReader(source, delim[0], delim[1], delim[2])
 	io.Copy(os.Stdout, rdr)
 }
