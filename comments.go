@@ -89,7 +89,7 @@ func text(dst, src []byte, r *reader) (written, read int, next state) {
 		}
 
 		if src[rc] == delim.del[delim.delpos] {
-			
+
 			delim.delpos++
 			if delim.delpos == delim.dellen {
 				delim.delpos = 0
@@ -99,7 +99,7 @@ func text(dst, src []byte, r *reader) (written, read int, next state) {
 			// This means that delim.delpos != 0,
 			// so add stuff to buffer
 			for i := 0; i < delim.delpos; i++ {
-				delim.buf[(delim.bufepos + i) % delim.buflen] = delim.del[i]
+				delim.buf[(delim.bufepos+i)%delim.buflen] = delim.del[i]
 			}
 			delim.bufepos = (delim.bufepos + delim.delpos) % delim.buflen
 			delim.delpos = 1
@@ -110,7 +110,7 @@ func text(dst, src []byte, r *reader) (written, read int, next state) {
 				}
 				delim.bufepos = (delim.bufepos + delim.delpos) % delim.buflen
 				delim.delpos = 0
-				
+
 			}
 			// Either write another character
 			// from the buffer and write one
