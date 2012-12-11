@@ -11,6 +11,7 @@ var (
 	bash = []string{"#", "\n", ""}
 	c1   = []string{"//", "\n", ""}
 	c2   = []string{"/*", "*/", ""}
+	runon = []string{"acacacb", "\n", "\n"}
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 		}
 	}
 
-	delim := bash
+	delim := runon
 
 	// Try messing around with start and end delimiters
 	rdr := comments.NewCustomReader(source, delim[0], delim[1], delim[2])
